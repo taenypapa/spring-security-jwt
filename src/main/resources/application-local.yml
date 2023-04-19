@@ -36,5 +36,12 @@ logging:
     console: '%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n'
 custom:
   properties:
-    default-id: "test001"
-    default-password: "test002!"
+    client-id: client_id
+    client-secret: client_secret
+
+## security
+security:
+  oauth2:
+    resource:
+      jwt:
+        key-value: jwt_key_value

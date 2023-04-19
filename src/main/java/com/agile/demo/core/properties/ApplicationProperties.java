@@ -10,6 +10,6 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "custom.properties")
 @Getter @Setter
 public class ApplicationProperties {
-    private String defaultId;
-    private String defaultPassword;
+    private String clientId;
+    private String clientSecret;
 }
