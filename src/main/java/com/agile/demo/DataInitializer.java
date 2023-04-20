@@ -23,11 +23,11 @@ public class DataInitializer implements ApplicationRunner {
 	public void run(ApplicationArguments args) throws Exception {
 		accountRepository.save(AccountEntity.builder()
 						.userId("test1")
+						.password(passwordEncoder.encode("test2"))
 						.role("SUPER")
 						.email("test@test.com")
 						.name("test")
 						.phone("010-000-0000")
-						.password(passwordEncoder.encode("test2"))
 				.build());
 
 	}

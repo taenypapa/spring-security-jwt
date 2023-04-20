@@ -33,6 +33,7 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
+
 	@Value("${security.oauth2.resource.jwt.key-value}")
 	private String jwtKeyValue;
 
