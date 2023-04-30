@@ -200,3 +200,69 @@ public class AccountDto {
 
   }
 ```
+
+### MSA Resource 서버 연동(연동 필수 확인)
+```java
+@Configuration
+@EnableAuthorizationServer
+public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
+
+	@Autowired
+	private AuthenticationManager authenticationManager;
+
+	@Autowired
+	private CustomUserDetailsService customUserDetailsService;
+
+	@Autowired
+	private ApplicationProperties applicationProperties;
+
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
+
+    /* 연동필수 */
+	@Value("${security.oauth2.resource.jwt.key-value}")
+	private String jwtKeyValue;//resource 서버와 authorization 서버가 같아야 함
+
+	@Override
+	public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+		// 인증 과정 endpoint에 대한 설정을 해줍니다.
+		super.configure(endpoints);
+
+		endpoints.accessTokenConverter(jwtAccessTokenConverter())
+				.authenticationManager(authenticationManager)
+				.userDetailsService(customUserDetailsService)
+				.tokenStore(tokenStore())
+				.reuseRefreshTokens(false);
+	}
+
+	@Override
+	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+		// oauth_client_details 테이블에 등록된 사용자로 조회합니다.
+		clients.inMemory()
+				.withClient(applicationProperties.getClientId()) // 클라이언트 아이디
+                /* 연동필수 */
+				.resourceIds("authorization", "mail")//resource 서버에서 지정한 아이디 값
+				.secret(passwordEncoder.encode(applicationProperties.getClientSecret())) // 클라이언트 시크릿
+				.authorizedGrantTypes("password","client_credentials","refresh_token")
+				.scopes("read", "write")    // 해당 클라이언트의 접근 범위
+				.accessTokenValiditySeconds(60 * 60)            // access token 유효 기간 (10분)
+				.refreshTokenValiditySeconds(60 * 60 * 24 * 7);   // refresh token 유효 기간 (7일)
+
+	}
+
+	@Bean
+	public TokenStore tokenStore() {
+		return new InMemoryTokenStore();
+	}
+
+	@Bean
+	public JwtAccessTokenConverter jwtAccessTokenConverter() {
+		CustomJwtAccessTokenConverter accessTokenConverter = new CustomJwtAccessTokenConverter();
+		accessTokenConverter.setSigningKey(jwtKeyValue);
+
+		return accessTokenConverter;
+	}
+
+}
+```
