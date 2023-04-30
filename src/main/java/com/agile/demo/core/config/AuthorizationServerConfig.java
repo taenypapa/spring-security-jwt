@@ -54,10 +54,11 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
 		// oauth_client_details 테이블에 등록된 사용자로 조회합니다.
 		clients.inMemory()
 				.withClient(applicationProperties.getClientId()) // 클라이언트 아이디
+				.resourceIds("authorization", "mail")
 				.secret(passwordEncoder.encode(applicationProperties.getClientSecret())) // 클라이언트 시크릿
 				.authorizedGrantTypes("password","client_credentials","refresh_token")
 				.scopes("read", "write")    // 해당 클라이언트의 접근 범위
-				.accessTokenValiditySeconds(60 * 10 )            // access token 유효 기간 (10분)
+				.accessTokenValiditySeconds(60 * 10)            // access token 유효 기간 (10분)
 				.refreshTokenValiditySeconds(60 * 60 * 24 * 7);   // refresh token 유효 기간 (7일)
 
 	}
