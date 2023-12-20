@@ -1,0 +1,175 @@
+package com.agile.demo.core.jwt;
+
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import java.io.UnsupportedEncodingException;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
+
+@Slf4j
+@NoArgsConstructor
+public class RSAUtil {
+
+    public static KeyPair generateRSAKeyPair(){
+
+        SecureRandom secureRandom = new SecureRandom();
+        KeyPairGenerator gen;
+        try {
+            gen = KeyPairGenerator.getInstance("RSA");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        gen.initialize(2048, secureRandom);
+
+        return gen.genKeyPair();
+    }
+
+    public static String getPrivateKeyBase64EncodedString(KeyPair keyPair) {
+        return Base64.getEncoder().encodeToString(keyPair.getPrivate().getEncoded());
+    }
+
+    public static String getPublicKeyBase64EncodedString(KeyPair keyPair) {
+        return Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
+    }
+
+    /**
+     * Public Key로 RSA 암호화를 수행합니다.
+     * @param plainText 암호화할 평문입니다.
+     * @param publicKey 공개키 입니다.
+     * @return
+     */
+    public static String encryptRSA(String plainText, PublicKey publicKey) {
+
+        Cipher cipher;
+        byte[] bytePlain;
+
+        try {
+            cipher = Cipher.getInstance("RSA");
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            bytePlain = cipher.doFinal(plainText.getBytes());
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchPaddingException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidKeyException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalBlockSizeException e) {
+            throw new RuntimeException(e);
+        } catch (BadPaddingException e) {
+            throw new RuntimeException(e);
+        }
+
+        return Base64.getEncoder().encodeToString(bytePlain);
+    }
+
+    /**
+     * Private Key로 RAS 복호화를 수행합니다.
+     *
+     * @param encrypted 암호화된 이진데이터를 base64 인코딩한 문자열 입니다.
+     * @param privateKey 복호화를 위한 개인키 입니다.
+     * @return
+     * @throws Exception
+     */
+    public static String decryptRSA(String encrypted, PrivateKey privateKey) {
+
+        Cipher cipher = null;
+        byte[] byteEncrypted = null;
+        String decrypted = null;
+
+        try {
+            cipher = Cipher.getInstance("RSA");
+            byteEncrypted = Base64.getDecoder().decode(encrypted.getBytes());
+            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+            byte[] bytePlain = cipher.doFinal(byteEncrypted);
+            decrypted = new String(bytePlain, "utf-8");
+
+        } catch (NoSuchAlgorithmException e) {
+            log.error("### NoSuchAlgorithmException: {}", e);
+            throw new RuntimeException(e);
+
+        } catch (NoSuchPaddingException e) {
+            log.error("### NoSuchPaddingException: {}", e);
+            throw new RuntimeException(e);
+
+        } catch (IllegalBlockSizeException e) {
+            log.error("### IllegalBlockSizeException: {}", e);
+            throw new RuntimeException(e);
+
+        } catch (UnsupportedEncodingException e) {
+            log.error("### UnsupportedEncodingException: {}", e);
+            throw new RuntimeException(e);
+
+        } catch (BadPaddingException e) {
+            log.error("### BadPaddingException: {}", e);
+            throw new RuntimeException(e);
+
+        } catch (InvalidKeyException e) {
+            log.error("### InvalidKeyException: {}", e);
+            throw new RuntimeException(e);
+        }
+
+        return decrypted;
+    }
+
+    /**
+     * Base64 엔코딩된 개인키 문자열로부터 PrivateKey 객체를 얻는다.
+     * @param keyString
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
+     */
+    public static PrivateKey getPrivateKeyFromBase64String(final String keyString) {
+
+        PrivateKey result = null;
+
+        final String privateKeyString = keyString.replaceAll("\\n",  "").replaceAll("-{5}[ a-zA-Z]*-{5}", "");
+
+        KeyFactory keyFactory = null;
+        try {
+            keyFactory = KeyFactory.getInstance("RSA");
+            PKCS8EncodedKeySpec keySpecPKCS8 = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyString));
+            result = keyFactory.generatePrivate(keySpecPKCS8);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidKeySpecException e) {
+            throw new RuntimeException(e);
+        }
+
+        return result;
+    }
+
+    /**
+     * Base64 엔코딩된 공용키키 문자열로부터 PublicKey 객체를 얻는다.
+     * @param keyString
+     * @return
+     * @throws NoSuchAlgorithmException
+     * @throws InvalidKeySpecException
+     */
+    public static PublicKey getPublicKeyFromBase64String(final String keyString) {
+
+        PublicKey publicKey = null;
+        final String publicKeyString = keyString.replaceAll("\\n",  "").replaceAll("-{5}[ a-zA-Z]*-{5}", "");
+
+        KeyFactory keyFactory = null;
+        try {
+            keyFactory = KeyFactory.getInstance("RSA");
+            X509EncodedKeySpec keySpecX509 = new X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyString));
+            publicKey = keyFactory.generatePublic(keySpecX509);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        } catch (InvalidKeySpecException e) {
+            throw new RuntimeException(e);
+        }
+
+        return publicKey;
+    }
+
+}
